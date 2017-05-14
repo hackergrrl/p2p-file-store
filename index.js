@@ -1,7 +1,6 @@
 module.exports = MediaStore
 
 var Store = require('fs-blob-store')
-var fs = require('fs')
 var path = require('path')
 var walk = require('fs-walk')
 
@@ -39,9 +38,9 @@ MediaStore.prototype._list = function (cb) {
   walk.files(this._dir, function (basedir, filename, stat, next) {
     names.push(filename)
     next()
-  }, function(err) {
+  }, function (err) {
     cb(err, names)
-  });
+  })
 }
 
 MediaStore.prototype.replicateStore = function (otherStore, done) {

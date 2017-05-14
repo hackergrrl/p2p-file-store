@@ -35,5 +35,21 @@ test('read/write', function (t, dir, done) {
 })
 
 // - replicateStore: empty <-> empty
+test('empty <-> empty', function (t, dir, done) {
+  var root1 = path.join(dir, '1')
+  var store1 = Store(root1)
+  var root2 = path.join(dir, '2')
+  var store2 = Store(root2)
+
+  store1.replicateStore(store2, check)
+
+  function check (err) {
+    t.error(err)
+    done()
+    t.end()
+  }
+})
+
 // - replicateStore: 3 files <-> empty
 // - replicateStore: 3 files <-> 2 files
+

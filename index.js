@@ -39,7 +39,8 @@ MediaStore.prototype._list = function (cb) {
     names.push(filename)
     next()
   }, function (err) {
-    cb(err, names)
+    if (err && err.code === 'ENOENT') cb(null, [])
+    else cb(err, names)
   })
 }
 

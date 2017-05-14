@@ -15,7 +15,8 @@
   },
   "keywords": [],
   "dependencies": {
-    "fs-blob-store": "^5.2.1"
+    "fs-blob-store": "^5.2.1",
+    "fs-walk": "0.0.1"
   },
   "devDependencies": {
     "tape": "~4.6.2",

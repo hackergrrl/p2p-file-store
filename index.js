@@ -2,6 +2,8 @@ module.exports = MediaStore
 
 var Store = require('fs-blob-store')
 var fs = require('fs')
+var path = require('path')
+var walk = require('fs-walk')
 
 function MediaStore (dir, opts) {
   if (!(this instanceof MediaStore)) return new MediaStore(dir, opts)
@@ -10,23 +12,36 @@ function MediaStore (dir, opts) {
   // TODO: expose subdir prefix length opt
 
   this._dir = dir
-  this._store = Store(dir)
+  this._stores = {}
+}
+
+MediaStore.prototype._getStore = function (subdir) {
+  if (!this._stores[subdir]) {
+    this._stores[subdir] = Store(path.join(this._dir, subdir))
+  }
+  return this._stores[subdir]
 }
 
 MediaStore.prototype.createReadStream = function (name) {
-  return this._store.createReadStream(name)
+  var subdir = nameToSubdir(name, 7)
+  var store = this._getStore(subdir)
+  return store.createReadStream(name)
 }
 
 MediaStore.prototype.createWriteStream = function (name) {
-  return this._store.createWriteStream(name)
+  var subdir = nameToSubdir(name, 7)
+  var store = this._getStore(subdir)
+  return store.createWriteStream(name)
 }
 
 MediaStore.prototype.list = function (cb) {
-  fs.readdir(this._dir, function (err, files) {
-    if (err && err.code === 'ENOENT') cb(null, [])
-    else if (err) cb(err)
-    else cb(null, files)
-  })
+  var names = []
+  walk.files(this._dir, function (basedir, filename, stat, next) {
+    names.push(filename)
+    next()
+  }, function(err) {
+    cb(err, names)
+  });
 }
 
 MediaStore.prototype.replicateStore = function (otherStore, done) {
@@ -80,6 +95,10 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
       else xferAll(from, to, names, fin)
     })
   }
+}
+
+function nameToSubdir (name, prefixLen) {
+  return name.substring(0, Math.min(prefixLen, name.lastIndexOf('.')))
 }
 
 // What's in 'b' that is not in 'a'?

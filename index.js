@@ -34,7 +34,7 @@ MediaStore.prototype.createWriteStream = function (name) {
   return store.createWriteStream(name)
 }
 
-MediaStore.prototype.list = function (cb) {
+MediaStore.prototype._list = function (cb) {
   var names = []
   walk.files(this._dir, function (basedir, filename, stat, next) {
     names.push(filename)
@@ -48,9 +48,9 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
   var pending = 2
   var self = this
 
-  this.list(function (err, myNames) {
+  this._list(function (err, myNames) {
     if (err) return done(err)
-    otherStore.list(function (err, yourNames) {
+    otherStore._list(function (err, yourNames) {
       if (err) return done(err)
 
       var myWant = missing(myNames, yourNames)

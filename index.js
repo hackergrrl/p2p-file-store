@@ -5,6 +5,7 @@ var path = require('path')
 var walk = require('fs-walk')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
+var debug = require('debug')('p2p-media-store')
 
 function noop () {}
 
@@ -62,11 +63,11 @@ MediaStore.prototype.createWriteStream = function (name, done) {
     var subdir = filenamePrefix(name, 7)
     var to = path.join(self._dir, subdir, name)
 
-    console.log('gonna rename', from, to)
+    debug('gonna rename', from, to)
     mkdirp(path.join(self._dir, subdir), function (err) {
       if (err) return done(err)
       fs.rename(from, to, function (err) {
-        console.log('renamed')
+        debug('renamed')
         done(err)
       })
     })
@@ -84,14 +85,14 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
       if (err) return done(err)
 
       var myWant = missing(myNames, yourNames)
-      console.log('I want', myWant)
+      debug('I want', myWant)
       xferAll(otherStore, self, myWant, function (err) {
         // TODO: catch + return error(s)
         if (--pending === 0) return done(err)
       })
 
       var yourWant = missing(yourNames, myNames)
-      console.log('you want', yourWant)
+      debug('you want', yourWant)
       xferAll(self, otherStore, yourWant, function (err) {
         // TODO: catch + return error(s)
         if (--pending === 0) return done(err)
@@ -100,22 +101,22 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
   })
 
   function xfer (from, to, name, fin) {
-    console.log('gonna xfer', name)
+    debug('gonna xfer', name)
 
     var ws = to.createWriteStream(name, onFinish)
     from.createReadStream(name).pipe(ws)
 
-    console.log('xferring', name)
+    debug('xferring', name)
 
     function onFinish (err) {
-      console.log('xferred', name, err)
+      debug('xferred', name, err)
       fin(err)
     }
   }
 
   function xferAll (from, to, names, fin) {
     if (names.length === 0) {
-      console.log('done xferring')
+      debug('done xferring')
       return fin()
     }
 

@@ -21,18 +21,6 @@ MediaStore.prototype._getStore = function (subdir) {
   return this._stores[subdir]
 }
 
-MediaStore.prototype.createReadStream = function (name) {
-  var subdir = nameToSubdir(name, 7)
-  var store = this._getStore(subdir)
-  return store.createReadStream(name)
-}
-
-MediaStore.prototype.createWriteStream = function (name) {
-  var subdir = nameToSubdir(name, 7)
-  var store = this._getStore(subdir)
-  return store.createWriteStream(name)
-}
-
 MediaStore.prototype._list = function (cb) {
   var names = []
   walk.files(this._dir, function (basedir, filename, stat, next) {
@@ -42,6 +30,18 @@ MediaStore.prototype._list = function (cb) {
     if (err && err.code === 'ENOENT') cb(null, [])
     else cb(err, names)
   })
+}
+
+MediaStore.prototype.createReadStream = function (name) {
+  var subdir = filenamePrefix(name, 7)
+  var store = this._getStore(subdir)
+  return store.createReadStream(name)
+}
+
+MediaStore.prototype.createWriteStream = function (name) {
+  var subdir = filenamePrefix(name, 7)
+  var store = this._getStore(subdir)
+  return store.createWriteStream(name)
 }
 
 MediaStore.prototype.replicateStore = function (otherStore, done) {
@@ -97,7 +97,7 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
   }
 }
 
-function nameToSubdir (name, prefixLen) {
+function filenamePrefix (name, prefixLen) {
   return name.substring(0, Math.min(prefixLen, name.lastIndexOf('.')))
 }
 

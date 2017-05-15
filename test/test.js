@@ -18,15 +18,12 @@ test('read/write', function (t, dir, done) {
   var root = path.join(dir, '1')
   var store = Store(root)
 
-  var ws = store.createWriteStream('2010-01-01_foo.png')
-  ws.on('finish', check)
-  ws.on('error', function (err) {
-    t.error(err)
-  })
+  var ws = store.createWriteStream('2010-01-01_foo.png', check)
   ws.write('hello')
   ws.end()
 
-  function check () {
+  function check (err) {
+    t.error(err)
     t.ok(fs.existsSync(path.join(root, '2010-01')))
     t.equal(fs.readFileSync(path.join(root, '2010-01', '2010-01-01_foo.png'), 'utf8'), 'hello')
     done()
@@ -85,7 +82,7 @@ test('3 files <-> 2 files (1 in common)', function (t, dir, done) {
 
   var pending = 4
   writeFile(store1, '2010-01-01_foo.png', 'hello', written)
-  writeFile(store1, '2010-02-05_bar.png', 'goodbye', written)
+  writeFile(store1, '2010-01-05_bar.png', 'goodbye', written)
   writeFile(store1, '1976-12-17_quux.png', 'unix', written)
   writeFile(store2, '1900-01-01_first.png', 'elder', written)
   writeFile(store2, '2010-01-05_bar.png', 'goodbye', written)

@@ -3,12 +3,17 @@ module.exports = MediaStore
 var Store = require('fs-blob-store')
 var path = require('path')
 var walk = require('fs-walk')
+var fs = require('fs')
+var mkdirp = require('mkdirp')
+
+function noop () {}
 
 function MediaStore (dir, opts) {
   if (!(this instanceof MediaStore)) return new MediaStore(dir, opts)
 
   // TODO: expose whether to use subdirs opt
   // TODO: expose subdir prefix length opt
+  // TODO: expose whether to use a 'staging' subdir
 
   this._dir = dir
   this._stores = {}
@@ -24,7 +29,7 @@ MediaStore.prototype._getStore = function (subdir) {
 MediaStore.prototype._list = function (cb) {
   var names = []
   walk.files(this._dir, function (basedir, filename, stat, next) {
-    names.push(filename)
+    if (!basedir.endsWith('staging')) names.push(filename)
     next()
   }, function (err) {
     if (err && err.code === 'ENOENT') cb(null, [])
@@ -38,10 +43,34 @@ MediaStore.prototype.createReadStream = function (name) {
   return store.createReadStream(name)
 }
 
-MediaStore.prototype.createWriteStream = function (name) {
-  var subdir = filenamePrefix(name, 7)
-  var store = this._getStore(subdir)
-  return store.createWriteStream(name)
+// TODO: opts to choose whether to use staging area
+MediaStore.prototype.createWriteStream = function (name, done) {
+  var self = this
+  done = done || noop
+
+  var stagingStore = this._getStore('staging')
+  var ws = stagingStore.createWriteStream(name)
+  ws.on('finish', onFinish)
+  ws.on('error', done || noop)
+  return ws
+
+  function onFinish () {
+    var subdir = filenamePrefix(name, 7)
+
+    // write result to destination
+    var from = path.join(self._dir, 'staging', name)
+    var subdir = filenamePrefix(name, 7)
+    var to = path.join(self._dir, subdir, name)
+
+    console.log('gonna rename', from, to)
+    mkdirp(path.join(self._dir, subdir), function (err) {
+      if (err) return done(err)
+      fs.rename(from, to, function (err) {
+        console.log('renamed')
+        done(err)
+      })
+    })
+  }
 }
 
 MediaStore.prototype.replicateStore = function (otherStore, done) {
@@ -71,16 +100,16 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
 
   function xfer (from, to, name, fin) {
     console.log('gonna xfer', name)
-    var ws = to.createWriteStream(name)
+
+    var ws = to.createWriteStream(name, onFinish)
     from.createReadStream(name).pipe(ws)
+
     console.log('xferring', name)
-    ws.on('finish', function () {
-      console.log('xferred', name)
-      fin()
-    })
-    ws.on('error', function (err) {
+
+    function onFinish (err) {
+      console.log('xferred', name, err)
       fin(err)
-    })
+    }
   }
 
   function xferAll (from, to, names, fin) {

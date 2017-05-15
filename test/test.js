@@ -139,6 +139,30 @@ test('3 files <-> 2 files (1 in common)', function (t, dir, done) {
   }
 })
 
+// Simulate a stream error + partial write
+test('partial write failure', function (t, dir, done) {
+  var root = path.join(dir, '1')
+  var store = Store(root)
+
+  var ws = store.createWriteStream('2010-01-01_foo.png')
+
+  ws.on('finish', function () {
+    t.fail('should not have finished')
+  })
+  ws.on('error', check)
+  ws.write('hello ')
+  ws.write('there')
+  setTimeout(function () {
+    ws.emit('error', new Error('breakage'))
+  }, 100)
+
+  function check (err) {
+    t.notOk(fs.existsSync(path.join(root, '2010-01')))
+    done()
+    t.end()
+  }
+})
+
 function writeFile (store, name, data, done) {
   var ws = store.createWriteStream(name)
   ws.on('finish', done)

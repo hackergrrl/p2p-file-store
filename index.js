@@ -5,7 +5,7 @@ var path = require('path')
 var walk = require('fs-walk')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
-var debug = require('debug')('p2p-media-store')
+var debug = require('debug')('p2p-file-store')
 
 function noop () {}
 

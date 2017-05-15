@@ -1,11 +1,11 @@
-# p2p-media-store
+# p2p-file-store
 
-> Media store that syncs to other media stores.
+> Filesystem-based blob store that syncs to other fs-based blob stores.
 
 ## Usage
 
 ```js
-var MediaStore = require('p2p-media-store')
+var MediaStore = require('p2p-file-store')
 var fs = require('fs')
 
 var store1 = MediaStore('/tmp/media-one')
@@ -41,27 +41,27 @@ hello
 ## API
 
 ```js
-var MediaStore = require('p2p-media-store')
+var MediaStore = require('p2p-file-store')
 ```
 
 ### var store = new MediaStore(dir)
 
-Creates a new media store at the given directory path `dir`. This directory and
+Creates a new file store at the given directory path `dir`. This directory and
 any needed subdirectories will be created automatically as needed.
 
 ### var rs = store.createReadStream(name)
 
-Create a Readable stream of the contents of the media named `name`.
+Create a Readable stream of the contents of the file named `name`.
 
 ### var ws = store.createWriteStream(name[, cb])
 
-Create a Writable stream that will store the media named `name`. The callback
+Create a Writable stream that will store the file named `name`. The callback
 `cb` is called when all filesystem operations are completed, or there was an
 error, with the signature `function (err) { ... }`.
 
 ### store.replicateStore(otherStore[, cb])
 
-Replicate this store with another store. All media in `store` that is not in
+Replicate this store with another store. All files in `store` that is not in
 `otherStore` will be transferred to `otherStore`, and vice-versa.
 
 The callback `cb` is called on completion or error, with the signature `function
@@ -72,7 +72,7 @@ The callback `cb` is called on completion or error, with the signature `function
 With [npm](https://npmjs.org/) installed, run
 
 ```
-$ npm install p2p-media-store
+$ npm install p2p-file-store
 ```
 
 ## License

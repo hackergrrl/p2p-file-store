@@ -1,13 +1,13 @@
 {
-  "name": "p2p-media-store",
+  "name": "p2p-file-store",
   "description": "media store that syncs to other media stores",
   "author": "Stephen Whitmore <sww@eight.net>",
   "version": "0.0.0",
   "repository": {
-    "url": "git://github.com/noffle/p2p-media-store.git"
+    "url": "git://github.com/noffle/p2p-file-store.git"
   },
-  "homepage": "https://github.com/noffle/p2p-media-store",
-  "bugs": "https://github.com/noffle/p2p-media-store/issues",
+  "homepage": "https://github.com/noffle/p2p-file-store",
+  "bugs": "https://github.com/noffle/p2p-file-store/issues",
   "main": "index.js",
   "scripts": {
     "test": "tape test/*.js",

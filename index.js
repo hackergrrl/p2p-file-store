@@ -74,7 +74,7 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
     var ws = to.createWriteStream(name)
     from.createReadStream(name).pipe(ws)
     console.log('xferring', name)
-    ws.on('end', function () {
+    ws.on('finish', function () {
       console.log('xferred', name)
       fin()
     })

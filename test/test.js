@@ -34,7 +34,6 @@ test('read/write', function (t, dir, done) {
   }
 })
 
-// - replicateStore: empty <-> empty
 test('empty <-> empty', function (t, dir, done) {
   var root1 = path.join(dir, '1')
   var store1 = Store(root1)
@@ -50,6 +49,32 @@ test('empty <-> empty', function (t, dir, done) {
   }
 })
 
-// - replicateStore: 3 files <-> empty
-// - replicateStore: 3 files <-> 2 files
+test('1 file <-> empty', function (t, dir, done) {
+  var root1 = path.join(dir, '1')
+  var store1 = Store(root1)
+  var root2 = path.join(dir, '2')
+  var store2 = Store(root2)
 
+  var ws = store1.createWriteStream('2010-01-01_foo.png')
+  ws.on('finish', replicate)
+  ws.on('error', function (err) {
+    t.error(err)
+  })
+  ws.write('hello')
+  ws.end()
+
+  function replicate () {
+    store1.replicateStore(store2, check)
+  }
+
+  function check (err) {
+    t.error(err)
+    t.ok(fs.existsSync(path.join(root2, '2010-01')))
+    t.equal(fs.readFileSync(path.join(root2, '2010-01', '2010-01-01_foo.png'), 'utf8'), 'hello')
+    done()
+    t.end()
+  }
+})
+
+// - replicateStore: 3 files <-> 2 files
+// - replicateStore: 1 file <-> 1 file (dedupe => no change)

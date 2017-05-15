@@ -76,6 +76,7 @@ MediaStore.prototype.createWriteStream = function (name, done) {
 MediaStore.prototype.replicateStore = function (otherStore, done) {
   var pending = 2
   var self = this
+  done = done || noop
 
   this._list(function (err, myNames) {
     if (err) return done(err)

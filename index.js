@@ -7,6 +7,9 @@ var fs = require('fs')
 var mkdirp = require('mkdirp')
 var debug = require('debug')('p2p-file-store')
 
+var missing = require('./missing')
+var replication = require('./replication')
+
 function noop () {}
 
 function MediaStore (dir, opts) {
@@ -128,22 +131,11 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
   }
 }
 
-function filenamePrefix (name, prefixLen) {
-  return name.substring(0, Math.min(prefixLen, name.lastIndexOf('.')))
+MediaStore.prototype.replicateStream = function () {
+  return replication(this)
 }
 
-// What's in 'b' that is not in 'a'?
-// [t], [t] -> [t]
-function missing (a, b) {
-  var m = []
-  var amap = {}
-  a.forEach(function (v) { amap[v] = true })
-
-  b.forEach(function (v) {
-    if (!amap[v]) {
-      m.push(v)
-    }
-  })
-
-  return m
+// String, Number -> String
+function filenamePrefix (name, prefixLen) {
+  return name.substring(0, Math.min(prefixLen, name.lastIndexOf('.')))
 }

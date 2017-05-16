@@ -67,6 +67,28 @@ Replicate this store with another store. All files in `store` that is not in
 The callback `cb` is called on completion or error, with the signature `function
 (err) { ... }`.
 
+### store.replicateStream()
+
+Returns a `Duplex` stream that can perform file store replication with another
+file store duplex stream:
+
+```js
+var r1 = store1.replicateStream()
+var r2 = store2.replicateStream()
+
+r1.pipe(r2).pipe(r1)
+
+var pending = 2
+r1.on('end', done)
+r2.on('end', done)
+
+function done () {
+  if (--pending === 0) {
+    console.log('finished replicating')
+  }
+}
+```
+
 ## Install
 
 With [npm](https://npmjs.org/) installed, run

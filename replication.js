@@ -6,8 +6,15 @@ var missing = require('./missing')
 var eos = require('end-of-stream')
 var debug = require('debug')('p2p-file-store-replication')
 
-module.exports = function (store) {
+function noop () {}
+
+module.exports = function (store, opts) {
+  opts = opts || {}
   var ID = Math.round(Math.random() * 50)
+
+  var progressFn = opts.progressFn || noop
+  var filesToXfer = 0
+  var filesXferred = 0
 
   var encoder = lpstream.encode()
   var decoder = lpstream.decode()
@@ -31,6 +38,7 @@ module.exports = function (store) {
       case 'wait-remote-wants':
         state = 'wait-remote-files-length'
         var remoteWants = handleRemoteWants(data)
+        filesToXfer += remoteWants.length
         sendRequested(remoteWants, function () {
           debug(''+ID, 'ALL SENT')
           filesSent = true
@@ -51,6 +59,7 @@ module.exports = function (store) {
         var fn = pendingFilename
         debug('recving a remote file', fn)
         var ws = store.createWriteStream(fn, function (err) {
+          filesXferred++ && emitProgress()
           // TODO: handle error
           debug('recv\'d a remote file', fn)
           if (--numFilesToRecv === 0) {
@@ -101,6 +110,7 @@ module.exports = function (store) {
   function sendWants () {
     // send local wants
     var wants = missing(localHaves, remoteHaves)
+    filesToXfer += wants.length
     debug(''+ID, 'wrote local wants', JSON.stringify(wants))
     encoder.write(JSON.stringify(wants))
   }
@@ -124,6 +134,9 @@ module.exports = function (store) {
       collect(store.createReadStream(name), function (err, data) {
         encoder.write(name)
         encoder.write(data)
+
+        filesXferred++ && emitProgress()
+
         debug(''+ID, 'collected + wrote locally', name, err, data && data.length)
         if (--pending === 0) done()
       })
@@ -131,4 +144,8 @@ module.exports = function (store) {
   }
 
   return dup
+
+  function emitProgress () {
+    progressFn(filesXferred / filesToXfer)
+  }
 }

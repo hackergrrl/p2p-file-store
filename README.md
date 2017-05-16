@@ -59,15 +59,20 @@ Create a Writable stream that will store the file named `name`. The callback
 `cb` is called when all filesystem operations are completed, or there was an
 error, with the signature `function (err) { ... }`.
 
-### store.replicateStore(otherStore[, cb])
+### store.replicateStore(otherStore[, opts][, cb])
 
 Replicate this store with another store. All files in `store` that is not in
 `otherStore` will be transferred to `otherStore`, and vice-versa.
 
+`opts` is an object that may have the following properties:
+
+- `opts.progressFn` (function) - a function to call with periodic progress
+  events, with signature `function (percent) {...}`
+
 The callback `cb` is called on completion or error, with the signature `function
 (err) { ... }`.
 
-### store.replicateStream()
+### store.replicateStream([opts])
 
 Returns a `Duplex` stream that can perform file store replication with another
 file store duplex stream:
@@ -88,6 +93,11 @@ function done () {
   }
 }
 ```
+
+`opts` is an object that may have the following properties:
+
+- `opts.progressFn` (function) - a function to call with periodic progress
+  events, with signature `function (percent) {...}`
 
 ## Install
 

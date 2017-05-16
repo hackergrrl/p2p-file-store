@@ -77,15 +77,28 @@ MediaStore.prototype.createWriteStream = function (name, done) {
   }
 }
 
-MediaStore.prototype.replicateStore = function (otherStore, done) {
+MediaStore.prototype.replicateStore = function (otherStore, opts, done) {
+  if (typeof opts === 'function' && !done) {
+    done = opts
+    opts = null
+  }
+  opts = opts || {}
+
   var pending = 2
   var self = this
   done = done || noop
 
+  var progressFn = opts.progressFn || noop
+  var filesLeftToXfer = 0
+  var filesToXfer = 0
+
   this._list(function (err, myNames) {
     if (err) return done(err)
+    filesToXfer += myNames.length
     otherStore._list(function (err, yourNames) {
       if (err) return done(err)
+      filesToXfer += yourNames.length
+      filesLeftToXfer = filesToXfer
 
       var myWant = missing(myNames, yourNames)
       debug('I want', myWant)
@@ -125,14 +138,17 @@ MediaStore.prototype.replicateStore = function (otherStore, done) {
 
     var next = names.pop()
     xfer(from, to, next, function (err) {
+      filesLeftToXfer--
+      progressFn(1 - filesLeftToXfer / filesToXfer)
+
       if (err) fin(err)
       else xferAll(from, to, names, fin)
     })
   }
 }
 
-MediaStore.prototype.replicateStream = function () {
-  return replication(this)
+MediaStore.prototype.replicateStream = function (opts) {
+  return replication(this, opts)
 }
 
 // String, Number -> String

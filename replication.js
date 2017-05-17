@@ -38,7 +38,7 @@ module.exports = function (store, opts) {
         var remoteWants = handleRemoteWants(data)
         filesToXfer += remoteWants.length
         sendRequested(remoteWants, function () {
-          debug(''+ID, 'ALL SENT')
+          debug('' + ID, 'ALL SENT')
           filesSent = true
           if (filesReceived) terminate()
         })
@@ -57,11 +57,11 @@ module.exports = function (store, opts) {
         var fn = pendingFilename
         debug('recving a remote file', fn)
         var ws = store.createWriteStream(fn, function (err) {
-          filesXferred++ && emitProgress()
           // TODO: handle error
+          filesXferred++ && emitProgress()
           debug('recv\'d a remote file', fn)
           if (--numFilesToRecv === 0) {
-            debug(''+ID, 'ALL RECEIVED')
+            debug('' + ID, 'ALL RECEIVED')
             filesReceived = true
             if (filesSent) terminate()
           }
@@ -77,14 +77,14 @@ module.exports = function (store, opts) {
     debug('TERMINATING')
     // TODO: terminate replication
     encoder.end()
-    debug(''+ID, 'replication done')
+    debug('' + ID, 'replication done')
   }
 
   store._list(function (err, names) {
     if (err) {
       // TODO: handle error case
     } else {
-      debug(''+ID, 'lhave', names)
+      debug('' + ID, 'lhave', names)
       localHaves = names
 
       sendHaves()
@@ -93,7 +93,7 @@ module.exports = function (store, opts) {
 
   function sendHaves () {
     // send local haves
-    debug(''+ID, 'sent local haves')
+    debug('' + ID, 'sent local haves')
     encoder.write(JSON.stringify(localHaves))
 
     // begin reading
@@ -101,7 +101,7 @@ module.exports = function (store, opts) {
   }
 
   function handleRemoteHaves (data) {
-    debug(''+ID, 'got remote haves', data.toString())
+    debug('' + ID, 'got remote haves', data.toString())
     remoteHaves = JSON.parse(data.toString())
   }
 
@@ -109,32 +109,32 @@ module.exports = function (store, opts) {
     // send local wants
     var wants = missing(localHaves, remoteHaves)
     filesToXfer += wants.length
-    debug(''+ID, 'wrote local wants', JSON.stringify(wants))
+    debug('' + ID, 'wrote local wants', JSON.stringify(wants))
     encoder.write(JSON.stringify(wants))
   }
 
   function handleRemoteWants (data) {
     // recv remote wants
-    debug(''+ID, 'got remote wants', data.toString())
+    debug('' + ID, 'got remote wants', data.toString())
     return JSON.parse(data.toString())
   }
 
   function sendRequested (toSend, done) {
     var pending = toSend.length
 
-    debug(''+ID, 'writing', pending)
+    debug('' + ID, 'writing', pending)
     encoder.write(JSON.stringify(pending))
-    debug(''+ID, 'wrote # of entries count')
+    debug('' + ID, 'wrote # of entries count')
 
     toSend.forEach(function (name) {
-      debug(''+ID, 'collecting', name)
+      debug('' + ID, 'collecting', name)
       collect(store.createReadStream(name), function (err, data) {
         encoder.write(name)
         encoder.write(data)
 
         filesXferred++ && emitProgress()
 
-        debug(''+ID, 'collected + wrote locally', name, err, data && data.length)
+        debug('' + ID, 'collected + wrote locally', name, err, data && data.length)
         if (--pending === 0) done()
       })
     })

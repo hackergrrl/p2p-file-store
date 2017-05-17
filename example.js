@@ -1,5 +1,4 @@
 var MediaStore = require('./')
-var fs = require('fs')
 
 var store1 = MediaStore('/tmp/media-one')
 var store2 = MediaStore('/tmp/media-two')
@@ -19,7 +18,7 @@ function doneWriting () {
 }
 
 function replicate () {
-  store1.replicateStore(store2, function (err) {
+  store1.replicateStore(store2, function () {
     store2.createReadStream('foo_bar.png').pipe(process.stdout)
   })
 }

@@ -63,7 +63,6 @@ MediaStore.prototype.createWriteStream = function (name, done) {
 
     // write result to destination
     var from = path.join(self._dir, 'staging', name)
-    var subdir = filenamePrefix(name, 7)
     var to = path.join(self._dir, subdir, name)
 
     debug('gonna rename', from, to)

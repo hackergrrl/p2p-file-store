@@ -5,7 +5,7 @@ var fs = require('fs')
 var path = require('path')
 
 function test (name, run) {
-  var fn = tapeTest(name, function (t) {
+  tapeTest(name, function (t) {
     tmp(function (err, dir, cleanup) {
       if (err) throw new Error('failed to create temp dir for test ' + name)
       run(t, dir, cleanup)
@@ -153,6 +153,7 @@ test('partial write failure', function (t, dir, done) {
   }, 100)
 
   function check (err) {
+    t.ok(err)
     t.notOk(fs.existsSync(path.join(root, '2010-01')))
     done()
     t.end()

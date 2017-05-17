@@ -1,6 +1,5 @@
 var lpstream = require('length-prefixed-stream')
 var duplexify = require('duplexify')
-var tar = require('tar-stream')
 var collect = require('collect-stream')
 var missing = require('./missing')
 var eos = require('end-of-stream')
@@ -122,7 +121,6 @@ module.exports = function (store, opts) {
   }
 
   function sendRequested (toSend, done) {
-    var pack = tar.pack()
     var pending = toSend.length
 
     debug(''+ID, 'writing', pending)

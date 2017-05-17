@@ -2,7 +2,6 @@ var lpstream = require('length-prefixed-stream')
 var duplexify = require('duplexify')
 var collect = require('collect-stream')
 var missing = require('./missing')
-var eos = require('end-of-stream')
 var debug = require('debug')('p2p-file-store-replication')
 
 function noop () {}

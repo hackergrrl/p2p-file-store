@@ -6,6 +6,7 @@ var walk = require('fs-walk')
 var fs = require('fs')
 var mkdirp = require('mkdirp')
 var debug = require('debug')('p2p-file-store')
+var pathIsInside = require('path-is-inside')
 
 var missing = require('./missing')
 var replication = require('./replication')
@@ -15,25 +16,24 @@ function noop () {}
 function MediaStore (dir, opts) {
   if (!(this instanceof MediaStore)) return new MediaStore(dir, opts)
 
-  // TODO: expose whether to use subdirs opt
-  // TODO: expose subdir prefix length opt
   // TODO: expose whether to use a 'staging' subdir
 
   this._dir = dir
   this._stores = {}
 }
 
-MediaStore.prototype._getStore = function (subdir) {
-  if (!this._stores[subdir]) {
-    this._stores[subdir] = Store(path.join(this._dir, subdir))
+MediaStore.prototype._getStore = function (dir) {
+  if (!this._stores[dir]) {
+    this._stores[dir] = Store(path.join(this._dir, dir))
   }
-  return this._stores[subdir]
+  return this._stores[dir]
 }
 
 MediaStore.prototype._list = function (cb) {
   var names = []
-  walk.files(this._dir, function (basedir, filename, stat, next) {
-    if (!basedir.endsWith('staging')) names.push(filename)
+  walk.files(this._dir, (basedir, filename, stat, next) => {
+    var name = path.relative(this._dir, path.join(basedir, filename))
+    if (!basedir.endsWith('staging')) names.push(name)
     next()
   }, function (err) {
     if (err && err.code === 'ENOENT') cb(null, [])
@@ -41,32 +41,43 @@ MediaStore.prototype._list = function (cb) {
   })
 }
 
-MediaStore.prototype.createReadStream = function (name) {
-  var subdir = filenamePrefix(name, 7)
-  var store = this._getStore(subdir)
+MediaStore.prototype.createReadStream = function (filepath) {
+  filepath = path.resolve(this._dir, filepath)
+  if (!pathIsInside(filepath, this._dir)) {
+    return done(new Error('cannot write outside of file store root directory'))
+  }
+  var storepath = path.relative(this._dir, path.dirname(filepath))
+  var name = path.basename(filepath)
+
+  var store = this._getStore(storepath)
   return store.createReadStream(name)
 }
 
 // TODO: opts to choose whether to use staging area
-MediaStore.prototype.createWriteStream = function (name, done) {
+MediaStore.prototype.createWriteStream = function (filepath, done) {
   var self = this
   done = done || noop
 
-  var stagingStore = this._getStore('staging')
+  filepath = path.resolve(this._dir, filepath)
+  if (!pathIsInside(filepath, this._dir)) {
+    return done(new Error('cannot write outside of file store root directory'))
+  }
+  var storepath = path.relative(this._dir, path.dirname(filepath))
+  var name = path.basename(filepath)
+
+  var stagingStore = this._getStore(path.join('staging', storepath))
   var ws = stagingStore.createWriteStream(name)
   ws.on('finish', onFinish)
   ws.on('error', done || noop)
   return ws
 
   function onFinish () {
-    var subdir = filenamePrefix(name, 7)
-
     // write result to destination
-    var from = path.join(self._dir, 'staging', name)
-    var to = path.join(self._dir, subdir, name)
+    var from = path.join(self._dir, 'staging', storepath, name)
+    var to = path.join(self._dir, storepath, name)
 
     debug('gonna rename', from, to)
-    mkdirp(path.join(self._dir, subdir), function (err) {
+    mkdirp(path.join(self._dir, storepath), function (err) {
       if (err) return done(err)
       fs.rename(from, to, function (err) {
         debug('renamed')
@@ -119,7 +130,8 @@ MediaStore.prototype.replicateStore = function (otherStore, opts, done) {
     debug('gonna xfer', name)
 
     var ws = to.createWriteStream(name, onFinish)
-    from.createReadStream(name).pipe(ws)
+    var rs = from.createReadStream(name)
+    rs.pipe(ws)
 
     debug('xferring', name)
 

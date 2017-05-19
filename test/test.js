@@ -18,7 +18,7 @@ test('read/write', function (t, dir, done) {
   var root = path.join(dir, '1')
   var store = Store(root)
 
-  var ws = store.createWriteStream('2010-01-01_foo.png', check)
+  var ws = store.createWriteStream('2010-01/2010-01-01_foo.png', check)
   ws.write('hello')
   ws.end()
 
@@ -30,6 +30,24 @@ test('read/write', function (t, dir, done) {
     t.end()
   }
 })
+
+test('read/write with slash in filename', function (t, dir, done) {
+  var root = path.join(dir, '1')
+  var store = Store(root)
+
+  var ws = store.createWriteStream('2010-01-01/foo.png', check)
+  ws.write('hello')
+  ws.end()
+
+  function check (err) {
+    t.error(err)
+    t.ok(fs.existsSync(path.join(root, '2010-01-01')))
+    t.equal(fs.readFileSync(path.join(root, '2010-01-01', 'foo.png'), 'utf8'), 'hello')
+    done()
+    t.end()
+  }
+})
+
 
 test('empty <-> empty', function (t, dir, done) {
   var root1 = path.join(dir, '1')
@@ -52,39 +70,36 @@ test('1 file <-> empty', function (t, dir, done) {
   var root2 = path.join(dir, '2')
   var store2 = Store(root2)
 
-  var ws = store1.createWriteStream('2010-01-01_foo.png')
-  ws.on('finish', replicate)
-  ws.on('error', function (err) {
-    t.error(err)
-  })
-  ws.write('hello')
-  ws.end()
+  var ws = store1.createWriteStream('2010-01-01_foo.png', replicate)
+  ws.end('hello')
 
-  function replicate () {
+  function replicate (err) {
+    t.error(err)
     store1.replicateStore(store2, check)
   }
 
   function check (err) {
     t.error(err)
-    t.ok(fs.existsSync(path.join(root2, '2010-01')))
-    t.equal(fs.readFileSync(path.join(root2, '2010-01', '2010-01-01_foo.png'), 'utf8'), 'hello')
+    t.equal(fs.readFileSync(path.join(root2, '2010-01-01_foo.png'), 'utf8'), 'hello')
     done()
     t.end()
   }
 })
 
 test('3 files <-> 2 files (1 in common)', function (t, dir, done) {
+  t.plan(30)
+
   var root1 = path.join(dir, '1')
   var store1 = Store(root1)
   var root2 = path.join(dir, '2')
   var store2 = Store(root2)
 
   var pending = 4
-  writeFile(store1, '2010-01-01_foo.png', 'hello', written)
-  writeFile(store1, '2010-01-05_bar.png', 'goodbye', written)
-  writeFile(store1, '1976-12-17_quux.png', 'unix', written)
-  writeFile(store2, '1900-01-01_first.png', 'elder', written)
-  writeFile(store2, '2010-01-05_bar.png', 'goodbye', written)
+  writeFile(store1, '2010-01/2010-01-01_foo.png', 'hello', written)
+  writeFile(store1, '2010-01/2010-01-05_bar.png', 'goodbye', written)
+  writeFile(store1, '1976-12/1976-12-17_quux.png', 'unix', written)
+  writeFile(store2, '1900-01/1900-01-01_first.png', 'elder', written)
+  writeFile(store2, '2010-01/2010-01-05_bar.png', 'goodbye', written)
 
   function written (err) {
     t.error(err)
@@ -131,7 +146,6 @@ test('3 files <-> 2 files (1 in common)', function (t, dir, done) {
     t.equal(fs.readFileSync(path.join(root2, '1900-01', '1900-01-01_first.png'), 'utf8'), 'elder')
 
     done()
-    t.end()
   }
 })
 
@@ -169,11 +183,11 @@ test('replication stream: 3 files <-> 2 files (1 common)', function (t, dir, don
   var store2 = Store(root2)
 
   var pending = 5
-  writeFile(store1, '2010-01-01_foo.png', 'hello', written)
-  writeFile(store1, '2010-01-05_bar.png', 'goodbye', written)
-  writeFile(store1, '1976-12-17_quux.png', 'unix', written)
-  writeFile(store2, '1900-01-01_first.png', 'elder', written)
-  writeFile(store2, '2010-01-05_bar.png', 'goodbye', written)
+  writeFile(store1, '2010-01/2010-01-01_foo.png', 'hello', written)
+  writeFile(store1, '2010-01/2010-01-05_bar.png', 'goodbye', written)
+  writeFile(store1, '1976-12/1976-12-17_quux.png', 'unix', written)
+  writeFile(store2, '1900-01/1900-01-01_first.png', 'elder', written)
+  writeFile(store2, '2010-01/2010-01-05_bar.png', 'goodbye', written)
 
   function written (err) {
     t.error(err)
@@ -232,9 +246,6 @@ test('replication stream: 3 files <-> 2 files (1 common)', function (t, dir, don
 })
 
 function writeFile (store, name, data, done) {
-  var ws = store.createWriteStream(name)
-  ws.on('finish', done)
-  ws.on('error', done)
-  ws.write(data)
-  ws.end()
+  var ws = store.createWriteStream(name, done)
+  ws.end(data)
 }

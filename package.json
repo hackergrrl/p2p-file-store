@@ -2,7 +2,7 @@
   "name": "p2p-file-store",
   "description": "media store that syncs to other media stores",
   "author": "Stephen Whitmore <sww@eight.net>",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "repository": {
     "url": "git://github.com/noffle/p2p-file-store.git"
   },

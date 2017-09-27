@@ -1,15 +1,17 @@
 var tapeTest = require('tape')
 var Store = require('../')
-var tmp = require('tmp-dir')
+var tmp = require('tempy')
+var rimraf = require('rimraf')
 var fs = require('fs')
 var path = require('path')
 
 function test (name, run) {
   tapeTest(name, function (t) {
-    tmp(function (err, dir, cleanup) {
-      if (err) throw new Error('failed to create temp dir for test ' + name)
-      run(t, dir, cleanup)
-    })
+    var dir = tmp.directory()
+    run(t, dir, cleanup)
+    function cleanup () {
+      rimraf.sync(dir)
+    }
   })
 }
 

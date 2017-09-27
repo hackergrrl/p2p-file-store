@@ -24,9 +24,10 @@
     "mkdirp": "^0.5.1"
   },
   "devDependencies": {
+    "rimraf": "^2.6.2",
     "standard": "~10.0.0",
     "tape": "~4.6.2",
-    "tmp-dir": "0.0.1"
+    "tempy": "^0.2.1"
   },
   "license": "ISC"
 }

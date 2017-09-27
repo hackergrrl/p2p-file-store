@@ -2,6 +2,12 @@
 
 > Filesystem-based blob store that syncs to other fs-based blob stores.
 
+## DEPRECATION NOTICE
+
+This module has been broken apart into
+[safe-fs-blob-store](https://github.com/noffle/safe-fs-blob-store) and
+[blob-store-replication-stream](https://github.com/noffle/blob-store-replication-stream).
+
 ## Usage
 
 ```js
